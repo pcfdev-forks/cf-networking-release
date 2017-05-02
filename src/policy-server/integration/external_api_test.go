@@ -9,10 +9,12 @@ import (
 	"math/rand"
 	"net/http"
 	"netmon/integration/fakes"
+	"os/exec"
 	"policy-server/config"
 	"policy-server/models"
 	"strings"
 	"sync/atomic"
+	"time"
 
 	"code.cloudfoundry.org/go-db-helpers/testsupport"
 
@@ -521,6 +523,28 @@ var _ = Describe("External API", func() {
 				Expect(responseString).To(MatchJSON(`{ "error": "policies-create: invalid destination port value 0, must be 1-65535" }`))
 			})
 		})
+
+		XContext("when database is not reachable", func() {
+			BeforeEach(func() {
+				mustSucceed("iptables", "-A", "INPUT", "-p", "tcp", "--dport", testsupport.GetDBConnectionInfo().Port, "-j", "DROP")
+			})
+			AfterEach(func() {
+				mustSucceed("iptables", "-D", "INPUT", "-p", "tcp", "--dport", testsupport.GetDBConnectionInfo().Port, "-j", "DROP")
+			})
+			It("returns a 500 with a meaningful error", func() {
+				body := strings.NewReader(`{ "policies": [ {"source": { "id": "some-app-guid" }, "destination": { "id": "some-other-app-guid", "protocol": "tcp", "port": 8090 } } ] }`)
+				resp := makeAndDoRequest(
+					"POST",
+					fmt.Sprintf("http://%s:%d/networking/v0/external/policies", conf.ListenHost, conf.ListenPort),
+					body,
+				)
+
+				Expect(resp.StatusCode).To(Equal(http.StatusInternalServerError))
+				responseString, err := ioutil.ReadAll(resp.Body)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(responseString).To(MatchJSON("{}"))
+			})
+		})
 	})
 
 	Describe("cleanup policies", func() {
@@ -763,3 +787,11 @@ var _ = Describe("External API", func() {
 		})
 	})
 })
+
+func mustSucceed(binary string, args ...string) string {
+	cmd := exec.Command(binary, args...)
+	sess, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
+	Expect(err).NotTo(HaveOccurred())
+	Eventually(sess, 5*time.Second).Should(gexec.Exit(0))
+	return string(sess.Out.Contents())
+}
