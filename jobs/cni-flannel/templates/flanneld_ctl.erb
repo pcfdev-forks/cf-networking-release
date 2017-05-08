@@ -6,7 +6,7 @@ source /var/vcap/packages/ctl-utils/ctl_util.sh
 RUN_DIR=/var/vcap/sys/run/flannel
 LOG_DIR=/var/vcap/sys/log/flannel
 ETCD_CERTS_DIR=/var/vcap/jobs/cni-flannel/config/certs/etcd
-export PIDFILE=$RUN_DIR/flanneld.pid
+export PIDFILE=${RUN_DIR}/flanneld.pid
 
 ETCD_ENDPOINT=<%= p("cf_networking.plugin.etcd_endpoints").map{|addr| "\"https://#{addr}:4001\""}.join(",") %>
 
@@ -42,8 +42,8 @@ exec 2>> /var/vcap/sys/log/monit/flanneld.err.log
 case $1 in
 
   start)
-    mkdir -p $RUN_DIR
-    mkdir -p $LOG_DIR
+    mkdir -p ${RUN_DIR}
+    mkdir -p ${LOG_DIR}
 
     keyURL=${ETCD_ENDPOINT}/v2/keys/coreos.com/network/config
 
@@ -53,13 +53,13 @@ case $1 in
       --key ${ETCD_CERTS_DIR}/client.key \
       $keyURL \
       -XPUT -d value='<%= flannelConfig %>' \
-      1>>$LOG_DIR/flanneld.stdout.log \
-      2>>$LOG_DIR/flanneld.stderr.log
+      1>>${LOG_DIR}/flanneld.stdout.log \
+      2>>${LOG_DIR}/flanneld.stderr.log
 
     exec 2> >(tee -a $LOG_DIR/flanneld.stderr.log | logger -p user.error -t flanneld) \
          1> >(tee -a $LOG_DIR/flanneld.stdout.log | logger -t flanneld)
 
-    echo $$ > $PIDFILE
+         echo $$ > ${PIDFILE}
 
     exec /var/vcap/packages/flannel/bin/flanneld \
       --log_dir=${LOG_DIR} \

@@ -68,3 +68,15 @@ function stop_process() {
   echo "unable to stop process using SIGKILL after 5 seconds"
   return 1
 }
+
+function write_pid() {
+  local healthy=$1
+  local pid=$2
+
+  if [ ${healthy} -eq 0 ]; then
+    echo ${pid} > ${PIDFILE}
+  else
+    kill -9 ${pid}
+    exit 1
+  fi
+}
