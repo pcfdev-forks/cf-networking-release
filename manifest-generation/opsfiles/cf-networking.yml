@@ -100,6 +100,7 @@
     jobs:
     - name: policy-server
       release: cf-networking
+      consumes: {database: {from: db}}
       properties:
         cf_networking:
           policy_server:
@@ -112,7 +113,6 @@
               type: mysql
               username: network_policy
               password: "((cf_mysql_mysql_seeded_databases_network_policy_password))"
-              host: sql-db.service.cf.internal
               port: 3306
               name: network_policy
     - name: route_registrar
@@ -128,7 +128,11 @@
     - name: consul_agent
       release: consul
       consumes:
-        consul: {from: consul_server}
+        consul: nil
+        consul_common: {from: consul_common_link}
+        consul_server: nil
+        consul_client: {from: consul_client_link}
+
       properties:
         consul:
           agent:

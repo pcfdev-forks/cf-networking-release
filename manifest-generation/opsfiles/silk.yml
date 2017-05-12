@@ -12,6 +12,7 @@
   value:
     name: silk-controller
     release: cf-networking
+    consumes: {database: {from: db}}
     properties:
       cf_networking:
         silk_controller:
@@ -22,7 +23,6 @@
             type: mysql
             username: network_connectivity
             password: "((cf_mysql_mysql_seeded_databases_network_connectivity_password))"
-            host: sql-db.service.cf.internal
             port: 3306
             name: network_connectivity
         silk_daemon:
