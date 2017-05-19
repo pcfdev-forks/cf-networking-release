@@ -43,6 +43,13 @@ func NewMarkAllowRule(destinationIP, protocol string, port int, tag string, sour
 	}, fmt.Sprintf("src:%s_dst:%s", sourceAppGUID, destinationAppGUID))
 }
 
+func NewMarkAllowAll(tag string) IPTablesRule {
+	return AppendComment(IPTablesRule{
+		"-m", "mark", "--mark", fmt.Sprintf("0x%s", tag),
+		"--jump", "ACCEPT",
+	}, "allow-all")
+}
+
 func NewMarkLogRule(destinationIP, protocol string, port int, tag string, destinationAppGUID string) IPTablesRule {
 	return IPTablesRule{
 		"-d", destinationIP,

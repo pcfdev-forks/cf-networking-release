@@ -107,6 +107,8 @@ func (p *VxlanPolicyPlanner) GetRulesAndChain() (enforcer.RulesWithChain, error)
 	markedSourceIPs := make(map[string]struct{})
 	filterRuleset := []rules.IPTablesRule{}
 
+	filterRuleset = append(filterRuleset, rules.NewMarkAllowAll("ffff"))
+
 	iptablesLoggingEnabled := p.LoggingState.IsEnabled()
 	policySlice := models.PolicySlice(policies)
 	sort.Sort(policySlice)
