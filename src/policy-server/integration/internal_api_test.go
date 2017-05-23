@@ -4,6 +4,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"math/rand"
 	"net/http"
@@ -97,6 +98,91 @@ var _ = Describe("Internal API", func() {
 				{"source": { "id": "app3", "tag": "0003" }, "destination": { "id": "app1", "tag": "0001", "protocol": "tcp", "port": 9999 } }
 			]}
 		`))
+	})
+
+	FDescribe("self-policy", func() {
+		var body io.Reader
+
+		BeforeEach(func() {
+			body = strings.NewReader(`{
+				"id": "some-app-guid",
+				"protocol": "tcp",
+				"port": 8080
+			}`)
+		})
+
+		It("upserts a self-policy", func() {
+			By("calling the internal create-self-policy endpoint")
+			resp := helpers.MakeAndDoHTTPSRequest(
+				"POST",
+				fmt.Sprintf("http://%s:%d/networking/v0/internal/create-self-policy", conf.ListenHost, conf.ListenPort),
+				body,
+				tlsConfig,
+			)
+
+			By("checking that the response includes the tag")
+			Expect(resp.StatusCode).To(Equal(http.StatusOK))
+			responseString, err := ioutil.ReadAll(resp.Body)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(responseString).To(MatchJSON(`{ "tag": "abcd" }`))
+
+			By("checking that the policy was created")
+			resp = helpers.MakeAndDoRequest(
+				"GET",
+				fmt.Sprintf("http://%s:%d/networking/v0/external/policies", conf.ListenHost, conf.ListenPort),
+				nil,
+			)
+			Expect(resp.StatusCode).To(Equal(http.StatusOK))
+			responseString, err = ioutil.ReadAll(resp.Body)
+			Expect(responseString).To(MatchJSON(`{
+				"total_policies": 1,
+				"policies": [
+					{
+						"source": { "id": "some-app-guid" },
+					  "destination": {
+							"id": "some-app-guid",
+							"protocol": "tcp",
+							"port": 8080
+						}
+					}
+				]}`))
+
+			By("calling the internal create-self-policy endpoint again")
+			resp = helpers.MakeAndDoHTTPSRequest(
+				"POST",
+				fmt.Sprintf("http://%s:%d/networking/v0/internal/create-self-policy", conf.ListenHost, conf.ListenPort),
+				body,
+				tlsConfig,
+			)
+
+			By("checking that the response re-uses the same tag")
+			Expect(resp.StatusCode).To(Equal(http.StatusOK))
+			responseString, err = ioutil.ReadAll(resp.Body)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(responseString).To(MatchJSON(`{ "tag": "abcd" }`))
+
+			By("checking that the same policy is still there")
+			resp = helpers.MakeAndDoRequest(
+				"GET",
+				fmt.Sprintf("http://%s:%d/networking/v0/external/policies", conf.ListenHost, conf.ListenPort),
+				nil,
+			)
+			Expect(resp.StatusCode).To(Equal(http.StatusOK))
+			responseString, err = ioutil.ReadAll(resp.Body)
+			Expect(responseString).To(MatchJSON(`{
+				"total_policies": 1,
+				"policies": [
+					{
+						"source": { "id": "some-app-guid" },
+					  "destination": {
+							"id": "some-app-guid",
+							"protocol": "tcp",
+							"port": 8080
+						}
+					}
+				]}`))
+
+		})
 	})
 
 	It("emits metrics about durations", func() {

@@ -232,6 +232,13 @@ func main() {
 		ErrorResponse: errorResponse,
 	}
 
+	policiesSelfHandler := &handlers.PoliciesSelfInternal{
+		Logger:        logger.Session("self-policy-internal"),
+		Store:         wrappedStore,
+		Marshaler:     marshal.MarshalFunc(json.Marshal),
+		ErrorResponse: errorResponse,
+	}
+
 	metricsWrap := func(name string, handle http.Handler) http.Handler {
 		metricsWrapper := handlers.MetricWrapper{
 			Name:          name,
@@ -257,7 +264,10 @@ func main() {
 
 	metricsEmitter := initMetricsEmitter(logger, wrappedStore)
 	externalServer := initExternalServer(conf, externalHandlers)
-	internalServer := initInternalServer(conf, metricsWrap("InternalPolicies", internalPoliciesHandler))
+	internalServer := initInternalServer(conf,
+		metricsWrap("InternalPolicies", internalPoliciesHandler),
+		metricsWrap("PoliciesSelf", policiesSelfHandler),
+	)
 	poller := initPoller(logger, conf, policyCleaner)
 	debugServer := debugserver.Runner(fmt.Sprintf("%s:%d", conf.DebugServerHost, conf.DebugServerPort), reconfigurableSink)
 
@@ -325,12 +335,14 @@ func initPoller(logger lager.Logger, conf *config.Config, policyCleaner *cleaner
 	}
 }
 
-func initInternalServer(conf *config.Config, internalPoliciesHandler http.Handler) ifrit.Runner {
+func initInternalServer(conf *config.Config, internalPoliciesHandler http.Handler, policiesSelfHandler http.Handler) ifrit.Runner {
 	routes := rata.Routes{
 		{Name: "internal_policies", Method: "GET", Path: "/networking/v0/internal/policies"},
+		{Name: "self_policy", Method: "POST", Path: "/networking/v0/internal/create-self-policy"},
 	}
 	handlers := rata.Handlers{
 		"internal_policies": internalPoliciesHandler,
+		"self_policy":       policiesSelfHandler,
 	}
 
 	router, err := rata.NewRouter(routes, handlers)
