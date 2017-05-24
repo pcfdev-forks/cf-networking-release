@@ -51,7 +51,6 @@ var _ = Describe("PoliciesSelfInternal", func() {
 		resp = httptest.NewRecorder()
 		requestJSON = `{
 			"id": "some-app-guid",
-			"protocol": "tcp",
 			"port": 8080
 	  }`
 		request, err = http.NewRequest("POST", "/networking/v0/internal/self_policy", bytes.NewBuffer([]byte(requestJSON)))
@@ -61,7 +60,7 @@ var _ = Describe("PoliciesSelfInternal", func() {
 	It("creates a policy and returns the tag", func() {
 	})
 
-	FContext("when there are errors reading the body bytes", func() {
+	Context("when there are errors reading the body bytes", func() {
 		BeforeEach(func() {
 			request.Body = ioutil.NopCloser(&testsupport.BadReader{})
 		})
@@ -80,7 +79,7 @@ var _ = Describe("PoliciesSelfInternal", func() {
 
 	})
 
-	FContext("when there are errors in the request body formatting", func() {
+	Context("when there are errors in the request body formatting", func() {
 		BeforeEach(func() {
 			unmarshaler.UnmarshalReturns(errors.New("banana"))
 		})

@@ -235,6 +235,7 @@ func main() {
 	policiesSelfHandler := &handlers.PoliciesSelfInternal{
 		Logger:        logger.Session("self-policy-internal"),
 		Store:         wrappedStore,
+		Unmarshaler:   unmarshaler,
 		Marshaler:     marshal.MarshalFunc(json.Marshal),
 		ErrorResponse: errorResponse,
 	}

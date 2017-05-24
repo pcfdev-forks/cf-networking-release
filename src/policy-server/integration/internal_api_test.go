@@ -100,13 +100,12 @@ var _ = Describe("Internal API", func() {
 		`))
 	})
 
-	FDescribe("self-policy", func() {
+	Describe("self-policy", func() {
 		var body io.Reader
 
 		BeforeEach(func() {
 			body = strings.NewReader(`{
 				"id": "some-app-guid",
-				"protocol": "tcp",
 				"port": 8080
 			}`)
 		})
@@ -115,7 +114,7 @@ var _ = Describe("Internal API", func() {
 			By("calling the internal create-self-policy endpoint")
 			resp := helpers.MakeAndDoHTTPSRequest(
 				"POST",
-				fmt.Sprintf("http://%s:%d/networking/v0/internal/create-self-policy", conf.ListenHost, conf.ListenPort),
+				fmt.Sprintf("https://%s:%d/networking/v0/internal/create-self-policy", conf.ListenHost, conf.InternalListenPort),
 				body,
 				tlsConfig,
 			)
@@ -124,7 +123,7 @@ var _ = Describe("Internal API", func() {
 			Expect(resp.StatusCode).To(Equal(http.StatusOK))
 			responseString, err := ioutil.ReadAll(resp.Body)
 			Expect(err).NotTo(HaveOccurred())
-			Expect(responseString).To(MatchJSON(`{ "tag": "abcd" }`))
+			Expect(responseString).To(MatchJSON(`{ "tag": "0001" }`))
 
 			By("checking that the policy was created")
 			resp = helpers.MakeAndDoRequest(
@@ -148,9 +147,13 @@ var _ = Describe("Internal API", func() {
 				]}`))
 
 			By("calling the internal create-self-policy endpoint again")
+			body = strings.NewReader(`{
+				"id": "some-app-guid",
+				"port": 8080
+			}`)
 			resp = helpers.MakeAndDoHTTPSRequest(
 				"POST",
-				fmt.Sprintf("http://%s:%d/networking/v0/internal/create-self-policy", conf.ListenHost, conf.ListenPort),
+				fmt.Sprintf("https://%s:%d/networking/v0/internal/create-self-policy", conf.ListenHost, conf.InternalListenPort),
 				body,
 				tlsConfig,
 			)
@@ -159,7 +162,7 @@ var _ = Describe("Internal API", func() {
 			Expect(resp.StatusCode).To(Equal(http.StatusOK))
 			responseString, err = ioutil.ReadAll(resp.Body)
 			Expect(err).NotTo(HaveOccurred())
-			Expect(responseString).To(MatchJSON(`{ "tag": "abcd" }`))
+			Expect(responseString).To(MatchJSON(`{ "tag": "0001" }`))
 
 			By("checking that the same policy is still there")
 			resp = helpers.MakeAndDoRequest(

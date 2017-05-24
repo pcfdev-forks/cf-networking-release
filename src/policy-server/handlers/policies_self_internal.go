@@ -3,6 +3,7 @@ package handlers
 import (
 	"io/ioutil"
 	"net/http"
+	"policy-server/models"
 
 	"code.cloudfoundry.org/go-db-helpers/marshal"
 	"code.cloudfoundry.org/lager"
@@ -26,17 +27,59 @@ func (h *PoliciesSelfInternal) ServeHTTP(w http.ResponseWriter, req *http.Reques
 	}
 
 	var payload struct {
-		ID          string `json:"id"`
-		Destination string `json:"protocol"`
-		Port        int    `json:"port"`
+		ID   string `json:"id"`
+		Port int    `json:"port"`
 	}
 	err = h.Unmarshaler.Unmarshal(bodyBytes, &payload)
 	if err != nil {
 		h.ErrorResponse.BadRequest(w, err, "policies-self", "invalid values passed to API")
 		return
 	}
-	// policy := models.Policy{}
-	// TODO validate policy
-	// TODO create policy
-	// TODO return tag
+
+	policies := []models.Policy{
+		{
+			Source: models.Source{
+				ID: payload.ID,
+			},
+			Destination: models.Destination{
+				ID:       payload.ID,
+				Port:     payload.Port,
+				Protocol: "tcp",
+			},
+		},
+	}
+
+	err = h.Store.Create(policies)
+	if err != nil {
+		h.ErrorResponse.BadRequest(w, err, "policies-self", "creating self policy")
+		return
+	}
+
+	tags, err := h.Store.Tags()
+	if err != nil {
+		h.ErrorResponse.BadRequest(w, err, "policies-self", "getting tags")
+		return
+	}
+
+	var newTag string
+	for _, t := range tags {
+		if t.ID == payload.ID {
+			newTag = t.Tag
+			break
+		}
+	}
+
+	if newTag == "" {
+		h.ErrorResponse.InternalServerError(w, err, "policies-self", "no tag found")
+		return
+	}
+
+	var tag struct {
+		Tag string `json:"tag"`
+	}
+	tag.Tag = newTag
+	body, err := h.Marshaler.Marshal(tag)
+	w.WriteHeader(http.StatusOK)
+	w.Write(body)
+	return
 }
