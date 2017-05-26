@@ -34,6 +34,8 @@ var _ = Describe("Store", func() {
 
 		dbConf = testsupport.GetDBConfig()
 		dbConf.DatabaseName = fmt.Sprintf("test_%x", rand.Int())
+		dbConf.Timeout = 10
+		testsupport.RemoveDatabase(dbConf)
 		testsupport.CreateDatabase(dbConf)
 
 		var err error
@@ -51,12 +53,11 @@ var _ = Describe("Store", func() {
 		if realDb != nil {
 			Expect(realDb.Close()).To(Succeed())
 		}
-		testsupport.RemoveDatabase(dbConf)
 	})
 
 	Describe("concurrent create and delete requests", func() {
-		It("remains consistent", func() {
-			dataStore, err := store.New(realDb, group, destination, policy, 2, 2*time.Second)
+		FIt("remains consistent", func() {
+			dataStore, err := store.New(realDb, group, destination, policy, 2, time.Duration(dbConf.Timeout-1)*time.Second)
 			Expect(err).NotTo(HaveOccurred())
 
 			nPolicies := 1000

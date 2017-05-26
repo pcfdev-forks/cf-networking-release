@@ -55,17 +55,22 @@ function bootDB {
 
 bootDB "${DB:-"notset"}"
 
-if [ "${1:-""}" = "" ]; then
-  for dir in "${packages[@]}"; do
-    pushd "$dir"
-      ginkgo -r -p --race -randomizeAllSpecs -randomizeSuites -failFast "${@:2}" --skipPackage=timeouts
-    popd
-  done
-  for dir in "${serial_packages[@]}"; do
-    pushd "$dir"
-      ginkgo -r -randomizeAllSpecs -randomizeSuites -failFast "${@:2}"
-    popd
-  done
-else
-  ginkgo -r -randomizeAllSpecs -randomizeSuites "${@}"
-fi
+# turn on logging for all queries
+mysql -h 127.0.0.1 -u root --password='password' -e "SET GLOBAL general_log_file = '/var/log/mysql/mysql.log'"
+mysql -h 127.0.0.1 -u root --password='password' -e "SET GLOBAL general_log = 'ON'"
+
+
+# if [ "${1:-""}" = "" ]; then
+#   for dir in "${packages[@]}"; do
+#     pushd "$dir"
+#       ginkgo -r -p --race -randomizeAllSpecs -randomizeSuites -failFast "${@:2}" --skipPackage=timeouts
+#     popd
+#   done
+#   for dir in "${serial_packages[@]}"; do
+#     pushd "$dir"
+#       ginkgo -r -randomizeAllSpecs -randomizeSuites -failFast "${@:2}"
+#     popd
+#   done
+# else
+  ginkgo -r -randomizeAllSpecs -randomizeSuites -race -untilItFails -seed 1495747194 src/policy-server/store
+# fi
