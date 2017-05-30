@@ -60,7 +60,7 @@ var _ = Describe("Store", func() {
 			dataStore, err := store.New(realDb, group, destination, policy, 2, time.Duration(dbConf.Timeout-1)*time.Second)
 			Expect(err).NotTo(HaveOccurred())
 
-			nPolicies := 1000
+			nPolicies := 5000
 			policies := []interface{}{}
 			for i := 0; i < nPolicies; i++ {
 				appName := fmt.Sprintf("some-app-%x", i)
@@ -71,7 +71,7 @@ var _ = Describe("Store", func() {
 			}
 
 			parallelRunner := &testsupport.ParallelRunner{
-				NumWorkers: 4,
+				NumWorkers: 8,
 			}
 			toDelete := make(chan (interface{}), nPolicies)
 

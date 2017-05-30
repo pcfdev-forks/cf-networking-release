@@ -82,7 +82,7 @@ func (g *Group) Delete(tx Transaction, id int) error {
 func (g *Group) GetID(tx Transaction, guid string) (int, error) {
 	var id int
 	err := tx.QueryRow(
-		tx.Rebind(`SELECT id FROM groups WHERE guid = ?`),
+		tx.Rebind(`SELECT id FROM groups WHERE guid = ? FOR UPDATE`),
 		guid,
 	).Scan(&id)
 

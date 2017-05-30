@@ -154,7 +154,7 @@ func rollback(tx Transaction, err error) error {
 
 func (s *store) Create(policies []models.Policy) error {
 	ctx := context.Background()
-	ctx, _ = context.WithTimeout(ctx, s.timeout) // not tested
+	// ctx, _ = context.WithTimeout(ctx, s.timeout) // not tested
 	tx, err := s.conn.BeginTxx(ctx, nil)
 	if err != nil {
 		return fmt.Errorf("begin transaction: %s", err)
@@ -187,7 +187,7 @@ func (s *store) Create(policies []models.Policy) error {
 
 func (s *store) Delete(policies []models.Policy) error {
 	ctx := context.Background()
-	ctx, _ = context.WithTimeout(ctx, s.timeout) // not tested
+	// ctx, _ = context.WithTimeout(ctx, s.timeout) // not tested
 	tx, err := s.conn.BeginTxx(ctx, nil)
 	if err != nil {
 		return fmt.Errorf("begin transaction: %s", err)
@@ -217,6 +217,7 @@ func (s *store) Delete(policies []models.Policy) error {
 			if err == sql.ErrNoRows {
 				continue
 			} else {
+				// error here
 				return rollback(tx, fmt.Errorf("getting destination id: %s", err))
 			}
 		}
@@ -280,7 +281,7 @@ func (s *store) policiesQuery(query string, args ...interface{}) ([]models.Polic
 	rebindedQuery := helpers.RebindForSQLDialect(query, s.conn.DriverName())
 
 	ctx := context.Background()
-	ctx, _ = context.WithTimeout(ctx, s.timeout) // not tested
+	// ctx, _ = context.WithTimeout(ctx, s.timeout) // not tested
 	rows, err := s.conn.QueryContext(ctx, rebindedQuery, args...)
 	if err != nil {
 		return nil, fmt.Errorf("listing all: %s", err)
@@ -375,7 +376,7 @@ func (s *store) Tags() ([]models.Tag, error) {
 	tags := []models.Tag{}
 
 	ctx := context.Background()
-	ctx, _ = context.WithTimeout(ctx, s.timeout) // not tested
+	// ctx, _ = context.WithTimeout(ctx, s.timeout) // not tested
 	rows, err := s.conn.QueryContext(ctx, `
 		SELECT guid, id FROM groups
 		WHERE guid IS NOT NULL
