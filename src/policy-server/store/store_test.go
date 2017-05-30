@@ -28,6 +28,7 @@ var _ = Describe("Store", func() {
 	var group store.GroupRepo
 	var destination store.DestinationRepo
 	var policy store.PolicyRepo
+	const NumAttempts = 4
 
 	BeforeEach(func() {
 		mockDb = &fakes.Db{}
@@ -56,11 +57,30 @@ var _ = Describe("Store", func() {
 	})
 
 	Describe("concurrent create and delete requests", func() {
+		retry := func(dataStore store.Store, crud string, p models.Policy) error {
+			var err error
+			for attempt := 0; attempt < NumAttempts; attempt++ {
+				time.Sleep(time.Duration(attempt) * time.Second)
+				switch crud {
+				case "create":
+					err = dataStore.Create([]models.Policy{p})
+				case "delete":
+					err = dataStore.Delete([]models.Policy{p})
+				}
+				if err == nil {
+					break
+				} else {
+					fmt.Printf("Error on %s attempt. Retrying %d of %d: %s", crud, attempt, NumAttempts, err)
+				}
+			}
+			return err
+		}
+
 		FIt("remains consistent", func() {
 			dataStore, err := store.New(realDb, group, destination, policy, 2, time.Duration(dbConf.Timeout-1)*time.Second)
 			Expect(err).NotTo(HaveOccurred())
 
-			nPolicies := 5000
+			nPolicies := 2000
 			policies := []interface{}{}
 			for i := 0; i < nPolicies; i++ {
 				appName := fmt.Sprintf("some-app-%x", i)
@@ -71,14 +91,14 @@ var _ = Describe("Store", func() {
 			}
 
 			parallelRunner := &testsupport.ParallelRunner{
-				NumWorkers: 8,
+				NumWorkers: 4,
 			}
 			toDelete := make(chan (interface{}), nPolicies)
 
 			go func() {
 				parallelRunner.RunOnSlice(policies, func(policy interface{}) {
 					p := policy.(models.Policy)
-					Expect(dataStore.Create([]models.Policy{p})).To(Succeed())
+					Expect(retry(dataStore, "create", p)).To(Succeed())
 					toDelete <- p
 				})
 				close(toDelete)
@@ -87,7 +107,7 @@ var _ = Describe("Store", func() {
 			var nDeleted int32
 			parallelRunner.RunOnChannel(toDelete, func(policy interface{}) {
 				p := policy.(models.Policy)
-				Expect(dataStore.Delete([]models.Policy{p})).To(Succeed())
+				Expect(retry(dataStore, "delete", p)).To(Succeed())
 				atomic.AddInt32(&nDeleted, 1)
 			})
 

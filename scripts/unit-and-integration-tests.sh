@@ -75,5 +75,5 @@ mysql -h 127.0.0.1 -u root --password='password' -e "SET GLOBAL general_log = 'O
   # ginkgo -r -randomizeAllSpecs -randomizeSuites -race -untilItFails -seed 1495747194 src/policy-server/store
 # fi
 
-# ginkgo -r -randomizeAllSpecs -randomizeSuites -race -untilItFails -seed 1495747194 src/policy-server/store
-ginkgo -r -randomizeAllSpecs -randomizeSuites -race -seed 1495747194 src/policy-server/store
+ginkgo -r -randomizeAllSpecs -randomizeSuites -race -untilItFails -seed 1495747194 src/policy-server/store
+# ginkgo -r -randomizeAllSpecs -randomizeSuites -race -seed 1495747194 src/policy-server/store
