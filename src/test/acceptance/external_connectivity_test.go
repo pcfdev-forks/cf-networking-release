@@ -27,17 +27,6 @@ var _ = Describe("external connectivity", func() {
 		cli                           *cf_cli_adapter.Adapter
 	)
 
-	createASG := func(name string, asgDefinition string) {
-		asgFile, err := testsupport.CreateASGFile(asgDefinition)
-		Expect(err).NotTo(HaveOccurred())
-		Expect(cli.CreateSecurityGroup(name+"-asg", asgFile)).To(Succeed())
-		Expect(os.Remove(asgFile)).To(Succeed())
-	}
-
-	removeASG := func(name string) {
-		Expect(cli.DeleteSecurityGroup(name + "-asg")).To(Succeed())
-	}
-
 	BeforeEach(func() {
 		cli = &cf_cli_adapter.Adapter{CfCliPath: "cf"}
 		appA = fmt.Sprintf("appA-%d", rand.Int31())
@@ -202,6 +191,17 @@ func getAllSecurityGroups() []string {
 		}
 	}
 	return actualGroups
+}
+
+func createASG(name string, asgDefinition string) {
+	asgFile, err := testsupport.CreateASGFile(asgDefinition)
+	Expect(err).NotTo(HaveOccurred())
+	Expect(cli.CreateSecurityGroup(name+"-asg", asgFile)).To(Succeed())
+	Expect(os.Remove(asgFile)).To(Succeed())
+}
+
+func removeASG(name string) {
+	Expect(cli.DeleteSecurityGroup(name + "-asg")).To(Succeed())
 }
 
 var testASGs = map[string]string{
