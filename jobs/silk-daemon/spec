@@ -23,6 +23,10 @@ properties:
     description: "CIDR address block for overlay network.  Subnets for each diego cell are allocated out of this network."
     default: "10.255.0.0/16"
 
+  cf_networking.hack.instance_addr:
+    description: "Hack for pcfdev"
+    default: "10.0.2.15"
+
   cf_networking.vtep_port:
     description: "Host port used for receiving VXLAN packets"
     default: 4789
