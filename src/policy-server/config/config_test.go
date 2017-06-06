@@ -55,7 +55,8 @@ var _ = Describe("Config", func() {
 					"metron_address": "http://1.2.3.4:9999",
 					"log_level": "debug",
 					"cleanup_interval": 2,
-					"request_timeout": 5
+					"request_timeout": 5,
+					"max_policies": 3
 				}`)
 				c, err := config.New(file.Name())
 				Expect(err).NotTo(HaveOccurred())
@@ -86,6 +87,7 @@ var _ = Describe("Config", func() {
 				Expect(c.LogLevel).To(Equal("debug"))
 				Expect(c.CleanupInterval).To(Equal(2))
 				Expect(c.RequestTimeout).To(Equal(5))
+				Expect(c.MaxPolicies).To(Equal(3))
 			})
 		})
 
@@ -148,6 +150,7 @@ var _ = Describe("Config", func() {
 					"metron_address":   "http://1.2.3.4:9999",
 					"cleanup_interval": 2,
 					"request_timeout":  5,
+					"max_policies":     3,
 				}
 				delete(allData, missingFlag)
 				Expect(json.NewEncoder(file).Encode(allData)).To(Succeed())
@@ -172,6 +175,7 @@ var _ = Describe("Config", func() {
 			Entry("missing metron address", "metron_address", "MetronAddress: zero value"),
 			Entry("missing cleanup interval", "cleanup_interval", "CleanupInterval: less than min"),
 			Entry("missing request timeout", "request_timeout", "RequestTimeout: less than min"),
+			Entry("missing max policies", "max_policies", "MaxPolicies: less than min"),
 		)
 
 		Describe("database config", func() {
@@ -206,6 +210,7 @@ var _ = Describe("Config", func() {
 					"log_level":        "info",
 					"cleanup_interval": 2,
 					"request_timeout":  5,
+					"max_policies":     3,
 				}
 			})
 
