@@ -21,7 +21,7 @@ func main() {
 	flag.Parse()
 	conf, err := config.New(*configFilePath)
 	if err != nil {
-		log.Fatalf("reading config", err)
+		log.Fatalf(fmt.Sprintf("cfnetworking.netmon: reading config: %s", err))
 	}
 	logger := lager.NewLogger(fmt.Sprintf("%s.netmon", conf.LogPrefix))
 	sink := lager.NewReconfigurableSink(lager.NewWriterSink(os.Stdout, lager.DEBUG), lager.DEBUG)
