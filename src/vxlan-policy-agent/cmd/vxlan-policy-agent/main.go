@@ -53,7 +53,7 @@ func main() {
 
 	conf, err := config.New(*configFilePath)
 	if err != nil {
-		log.Fatalf(fmt.Sprintf("%s: could not read config file %s", logPrefix, err))
+		log.Fatalf("%s: could not read config file %s", logPrefix, err)
 	}
 
 	if conf.LogPrefix != "" {
@@ -150,7 +150,7 @@ func main() {
 
 	err = dropsonde.Initialize(conf.MetronAddress, dropsondeOrigin)
 	if err != nil {
-		log.Fatalf(fmt.Sprintf("%s: initializing dropsonde: %s", logPrefix, err))
+		log.Fatalf("%s: initializing dropsonde: %s", logPrefix, err)
 	}
 
 	uptimeSource := metrics.NewUptimeSource()

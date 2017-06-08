@@ -194,7 +194,7 @@ var _ = Describe("Integration", func() {
 		It("should log and exit after 5 seconds", func() {
 			Eventually(session, 90*time.Second).Should(gexec.Exit())
 
-			Expect(session.Err).To(gbytes.Say("testprefix: db connection timeout"))
+			Expect(session.Err).To(gbytes.Say("testprefix.policy-server: db connection timeout"))
 		})
 	})
 
