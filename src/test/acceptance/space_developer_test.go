@@ -18,7 +18,7 @@ import (
 	"github.com/pivotal-cf-experimental/warrant"
 )
 
-var _ = Describe("space developer policy configuration", func() {
+var _ = PDescribe("space developer policy configuration", func() {
 	var (
 		appA       string
 		appB       string

@@ -11,7 +11,7 @@ import (
 	"github.com/onsi/gomega/gexec"
 )
 
-var _ = Describe("trace logging for the plugin", func() {
+var _ = PDescribe("trace logging for the plugin", func() {
 	var prefix = testConfig.Prefix
 	var orgName string
 

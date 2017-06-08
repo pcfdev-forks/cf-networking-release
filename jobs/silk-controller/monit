@@ -1,4 +1,4 @@
-<% if p("cf_networking.disable") %>
+<% if p("cf_networking.disable") || p("cf_networking.host_only") %>
 <% else %>
 check process silk-controller
   with pidfile /var/vcap/sys/run/silk-controller/silk-controller.pid

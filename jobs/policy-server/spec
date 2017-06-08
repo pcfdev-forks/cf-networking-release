@@ -25,6 +25,10 @@ properties:
     description: "Disable container to container networking."
     default: false
 
+  cf_networking.host_only:
+    description: "Enable silk to run in host only mode"
+    default: true
+
   cf_networking.policy_cleanup_interval:
     description: "Clean up stale policies on this interval, in minutes."
     default: 60

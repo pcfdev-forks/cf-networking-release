@@ -12,7 +12,7 @@ import (
 	"github.com/onsi/gomega/gexec"
 )
 
-var _ = Describe("ASGs and Overlay Policy interaction", func() {
+var _ = PDescribe("ASGs and Overlay Policy interaction", func() {
 	var (
 		cli     *cf_cli_adapter.Adapter
 		orgName string

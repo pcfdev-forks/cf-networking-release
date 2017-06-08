@@ -11,7 +11,7 @@ import (
 	"github.com/onsi/gomega/gexec"
 )
 
-var _ = Describe("policy cleanup", func() {
+var _ = PDescribe("policy cleanup", func() {
 	var (
 		appA      string
 		orgName   string

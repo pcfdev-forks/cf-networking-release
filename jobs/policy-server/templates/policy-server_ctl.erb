@@ -1,6 +1,6 @@
 #!/bin/bash -eu
 
-<% unless p("cf_networking.disable") %>
+<% unless p("cf_networking.disable") || p("cf_networking.host_only") %>
 source /var/vcap/packages/ctl-utils/ctl_util.sh
 
 export RUN_DIR=/var/vcap/sys/run/policy-server

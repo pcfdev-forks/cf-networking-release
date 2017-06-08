@@ -1,4 +1,4 @@
-<% unless p("cf_networking.disable") %>
+<% unless p("cf_networking.disable") || p("cf_networking.host_only") %>
 check process silk-daemon
   with pidfile /var/vcap/sys/run/silk-daemon/silk-daemon.pid
   start program "/var/vcap/jobs/silk-daemon/bin/silk-daemon_ctl start"

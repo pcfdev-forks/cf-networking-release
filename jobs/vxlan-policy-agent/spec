@@ -17,6 +17,10 @@ properties:
     description: "Disable container to container networking."
     default: false
 
+  cf_networking.host_only:
+    description: "Enable silk to run in host only mode"
+    default: true
+
   cf_networking.iptables_logging:
     description: "Enables iptables logging for container to container traffic. Logs to the kernel log."
     default: false

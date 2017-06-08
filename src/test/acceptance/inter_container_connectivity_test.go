@@ -23,7 +23,7 @@ const PolicyWaitTime = 7 * time.Second
 
 var ports []int
 
-var _ = Describe("connectivity between containers on the overlay network", func() {
+var _ = PDescribe("connectivity between containers on the overlay network", func() {
 	Describe("networking policy", func() {
 		var (
 			appsProxy         []string

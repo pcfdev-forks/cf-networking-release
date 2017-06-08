@@ -1,6 +1,6 @@
 #!/bin/bash -eu
 
-<% unless p("cf_networking.disable") %>
+<% unless p("cf_networking.disable") || p("cf_networking.host_only") %>
 # remove the old flannel vtep device if it exists
 (ip link del dev flannel.1 || true) 2> /dev/null
 

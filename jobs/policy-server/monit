@@ -1,4 +1,4 @@
-<% unless p("cf_networking.disable") %>
+<% unless p("cf_networking.disable") || p("cf_networking.host_only") %>
 check process policy-server
   with pidfile /var/vcap/sys/run/policy-server/policy-server.pid
   start program "/usr/bin/timeout 25 /var/vcap/jobs/policy-server/bin/policy-server_ctl start"

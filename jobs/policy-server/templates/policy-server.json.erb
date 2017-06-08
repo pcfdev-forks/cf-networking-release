@@ -1,4 +1,4 @@
-<% unless p("cf_networking.disable") %>
+<% unless p("cf_networking.disable") || p("cf_networking.host_only") %>
 <%
     def db_param_path(name)
       "cf_networking.policy_server.database.#{name}"
