@@ -5,7 +5,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"policy-server/models"
-	"policy-server/uaa_client"
 
 	"code.cloudfoundry.org/cf-networking-helpers/marshal"
 	"code.cloudfoundry.org/lager"
@@ -19,8 +18,11 @@ type PoliciesDelete struct {
 	ErrorResponse errorResponse
 }
 
-func (h *PoliciesDelete) ServeHTTP(logger lager.Logger, w http.ResponseWriter, req *http.Request, tokenData uaa_client.CheckTokenResponse) {
+func (h *PoliciesDelete) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+	logger := getLogger(req)
 	logger = logger.Session("delete-policies")
+	tokenData := getTokenData(req)
+
 	bodyBytes, err := ioutil.ReadAll(req.Body)
 	if err != nil {
 		logger.Error("failed-reading-request-body", err)

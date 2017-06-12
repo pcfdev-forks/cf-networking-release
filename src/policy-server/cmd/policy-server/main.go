@@ -272,16 +272,40 @@ func main() {
 	authWrite := func(handler handlers.AuthenticatedHandler) middleware.LoggableHandlerFunc {
 		return networkWriteAuthenticator.Wrap(handler)
 	}
+	authConWrite := func(handler http.HandlerFunc) http.HandlerFunc {
+		networkWriteAuthenticatorContext := handlers.AuthenticatorContext{
+			Client:        uaaClient,
+			Scopes:        []string{"network.admin", "network.write"},
+			ErrorResponse: errorResponse,
+			ScopeChecking: !conf.EnableSpaceDeveloperSelfService,
+		}
+		return networkWriteAuthenticatorContext.Wrap(handler)
+	}
 
 	externalHandlers := rata.Handlers{
-		"uptime":          metricsWrap("Uptime", logWrap(uptimeHandler)),
-		"health":          metricsWrap("Health", logWrap(healthHandler)),
+		"uptime": metricsWrap("Uptime", logWrap(uptimeHandler)),
+		"health": metricsWrap("Health", logWrap(healthHandler)),
+
+		// Today: logWrap(authWrap(handlerWithLoggerAndAuth))
+		//				- handlerWithLoggerAndAuth is our policy handler
+		// 				- authWrap takes a handlerWithLoggerAndAuth and spits out a handlerWithLogger
+		//				- logWrap takes a handlerWithLogger and spits out an http.Handler
+		// We cannot reverse the wraps i.e. do authWrap(logWrap(handlerWithLoggerAndAuth)) because types will mismatch
 		"create_policies": metricsWrap("CreatePolicies", middleware.LogWrap(logger, authWrite(createPolicyHandler))),
-		"delete_policies": metricsWrap("DeletePolicies", middleware.LogWrap(logger, authWrite(deletePolicyHandler))),
-		"policies_index":  metricsWrap("PoliciesIndex", middleware.LogWrap(logger, authWrite(policiesIndexHandler))),
-		"cleanup":         metricsWrap("Cleanup", middleware.LogWrap(logger, authAdmin(policiesCleanupHandler))),
-		"tags_index":      metricsWrap("TagsIndex", middleware.LogWrap(logger, authAdmin(tagsIndexHandler))),
-		"whoami":          metricsWrap("WhoAmI", middleware.LogWrap(logger, authAdmin(whoamiHandler))),
+
+		// https://joeshaw.org/revisiting-context-and-http-handler-for-go-17/
+		// Spike:
+		// We can do logWrap(authWrap(handler)) or authWrap(logWrap(handler))
+		// We don't define any new handler types. All handlers are of type http.Handler
+		// Our policy handlers check the request context for logger or token data
+		"delete_policies": metricsWrap("DeletePolicies", middleware.LogConWrap(logger, authConWrite(deletePolicyHandler.ServeHTTP))),
+		// So changing the above line to below also works:
+		// "delete_policies": metricsWrap("DeletePolicies", authConWrite(middleware.LogConWrap(logger, deletePolicyHandler.ServeHTTP))),
+
+		"policies_index": metricsWrap("PoliciesIndex", middleware.LogWrap(logger, authWrite(policiesIndexHandler))),
+		"cleanup":        metricsWrap("Cleanup", middleware.LogWrap(logger, authAdmin(policiesCleanupHandler))),
+		"tags_index":     metricsWrap("TagsIndex", middleware.LogWrap(logger, authAdmin(tagsIndexHandler))),
+		"whoami":         metricsWrap("WhoAmI", middleware.LogWrap(logger, authAdmin(whoamiHandler))),
 	}
 
 	err = dropsonde.Initialize(conf.MetronAddress, dropsondeOrigin)

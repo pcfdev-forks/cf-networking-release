@@ -2,6 +2,7 @@ package handlers_test
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"net/http"
@@ -12,6 +13,7 @@ import (
 	"policy-server/uaa_client"
 
 	hfakes "code.cloudfoundry.org/cf-networking-helpers/fakes"
+	"code.cloudfoundry.org/cf-networking-helpers/middleware"
 	"code.cloudfoundry.org/cf-networking-helpers/testsupport"
 	"code.cloudfoundry.org/lager"
 
@@ -40,6 +42,7 @@ var _ = Describe("PoliciesDelete", func() {
 
 	BeforeEach(func() {
 		var err error
+		logger = lagertest.NewTestLogger("test")
 		requestJSON = `{"policies": [
 			{
 				"source": {
@@ -58,7 +61,6 @@ var _ = Describe("PoliciesDelete", func() {
 		fakeStore = &fakes.Store{}
 		fakeValidator = &fakes.Validator{}
 		fakePolicyGuard = &fakes.PolicyGuard{}
-		logger = lagertest.NewTestLogger("test")
 		fakeUnmarshaler = &hfakes.Unmarshaler{}
 		fakeUnmarshaler.UnmarshalStub = json.Unmarshal
 		fakeErrorResponse = &fakes.ErrorResponse{}
@@ -86,8 +88,18 @@ var _ = Describe("PoliciesDelete", func() {
 		fakePolicyGuard.CheckAccessReturns(true, nil)
 	})
 
+	makeRequest := func() {
+		if logger != nil {
+			contextWithLogger := context.WithValue(request.Context(), middleware.Key("logger"), logger)
+			request = request.WithContext(contextWithLogger)
+		}
+		contextWithTokenData := context.WithValue(request.Context(), handlers.TokenDataKey, tokenData)
+		request = request.WithContext(contextWithTokenData)
+		handler.ServeHTTP(resp, request)
+	}
+
 	It("removes the entry from the policy server", func() {
-		handler.ServeHTTP(logger, resp, request, tokenData)
+		makeRequest()
 
 		Expect(fakeUnmarshaler.UnmarshalCallCount()).To(Equal(1))
 		bodyBytes, _ := fakeUnmarshaler.UnmarshalArgsForCall(0)
@@ -103,7 +115,7 @@ var _ = Describe("PoliciesDelete", func() {
 	})
 
 	It("logs the policy with username and app guid", func() {
-		handler.ServeHTTP(logger, resp, request, tokenData)
+		makeRequest()
 		Expect(logger.Logs()).To(HaveLen(1))
 		Expect(logger.Logs()[0]).To(SatisfyAll(
 			LogsWith(lager.INFO, "test.delete-policies.deleted-policies"),
@@ -134,7 +146,7 @@ var _ = Describe("PoliciesDelete", func() {
 		})
 
 		It("calls the forbidden handler", func() {
-			handler.ServeHTTP(logger, resp, request, tokenData)
+			makeRequest()
 
 			Expect(fakeErrorResponse.ForbiddenCallCount()).To(Equal(1))
 
@@ -163,7 +175,7 @@ var _ = Describe("PoliciesDelete", func() {
 		})
 
 		It("calls the internal server error handler", func() {
-			handler.ServeHTTP(logger, resp, request, tokenData)
+			makeRequest()
 
 			Expect(fakeErrorResponse.InternalServerErrorCallCount()).To(Equal(1))
 
@@ -192,7 +204,7 @@ var _ = Describe("PoliciesDelete", func() {
 		})
 
 		It("calls the bad request handler", func() {
-			handler.ServeHTTP(logger, resp, request, tokenData)
+			makeRequest()
 
 			Expect(fakeErrorResponse.BadRequestCallCount()).To(Equal(1))
 
@@ -221,7 +233,7 @@ var _ = Describe("PoliciesDelete", func() {
 		})
 
 		It("calls the bad request handler", func() {
-			handler.ServeHTTP(logger, resp, request, tokenData)
+			makeRequest()
 
 			Expect(fakeErrorResponse.BadRequestCallCount()).To(Equal(1))
 
@@ -250,7 +262,7 @@ var _ = Describe("PoliciesDelete", func() {
 		})
 
 		It("calls the bad request handler", func() {
-			handler.ServeHTTP(logger, resp, request, tokenData)
+			makeRequest()
 
 			Expect(fakeErrorResponse.BadRequestCallCount()).To(Equal(1))
 
@@ -279,7 +291,7 @@ var _ = Describe("PoliciesDelete", func() {
 		})
 
 		It("calls the internal server error handler", func() {
-			handler.ServeHTTP(logger, resp, request, tokenData)
+			makeRequest()
 
 			Expect(fakeErrorResponse.InternalServerErrorCallCount()).To(Equal(1))
 
