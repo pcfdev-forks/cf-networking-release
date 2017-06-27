@@ -129,6 +129,18 @@ func main() {
 		log.Fatalf("%s.policy-server: db connect: %s", logPrefix, connectionResult.Err) // not tested
 	}
 
+	closeIt := func() {
+		if connectionResult.ConnectionPool != nil {
+			println(fmt.Sprintf("********** open connections before closing %d", connectionResult.ConnectionPool.Stats().OpenConnections))
+			fmt.Println("close************ closing connection pool")
+			connectionResult.ConnectionPool.Close()
+			println(fmt.Sprintf("********* open connections %d", connectionResult.ConnectionPool.Stats().OpenConnections))
+		} else {
+			fmt.Println("close************ connection pool IS NIL")
+		}
+	}
+	defer closeIt()
+
 	timeout := time.Duration(conf.Database.Timeout) * time.Second
 	timeout = timeout - time.Duration(500)*time.Millisecond
 
@@ -312,6 +324,7 @@ func main() {
 	err = <-monitor.Wait()
 	if err != nil {
 		logger.Error("exited-with-failure", err)
+		closeIt()
 		os.Exit(1)
 	}
 
