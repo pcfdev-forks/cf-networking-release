@@ -1,6 +1,7 @@
 <% unless p("cf_networking.disable") %>
 <%=
   require 'json'
+  require 'socket'
 
   VXLAN_OVERHEAD = 50
 
@@ -13,6 +14,8 @@
     end
   end
 
+  ethAddress = Socket.ip_address_list.reject { |addr| !addr.ip? || addr.ipv4_loopback? || addr.ipv6? }.find { |addr| /10.*/.match(addr.ip_address).to_a.first }
+
   toRender = {
     "name" => "cni-wrapper",
     "type" => "cni-wrapper-plugin",
@@ -20,7 +23,7 @@
     "datastore" => "/var/vcap/data/container-metadata/store.json",
     "iptables_lock_file" => "/var/vcap/data/garden-cni/iptables.lock",
     "health_check_url" => "http://127.0.0.1:" + p('cf_networking.silk_daemon.listen_port').to_s,
-    "instance_address" => spec.ip,
+    "instance_address" => ethAddress.ip_address,
     "iptables_asg_logging" => p("cf_networking.iptables_logging"),
     "iptables_c2c_logging" => p("cf_networking.iptables_logging"),
     "ingress_tag" => "ffff0000",
