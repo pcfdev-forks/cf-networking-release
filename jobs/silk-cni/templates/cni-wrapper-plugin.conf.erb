@@ -14,7 +14,7 @@
     end
   end
 
-  ethAddress = Socket.ip_address_list.reject { |addr| !addr.ip? || addr.ipv4_loopback? || addr.ipv6? }.find { |addr| /10.*/.match(addr.ip_address).to_a.first }
+  ethAddress = `ip route get 1.2.3.4 | head -n1 | cut -d ' ' -f8`
 
   toRender = {
     "name" => "cni-wrapper",
@@ -23,7 +23,7 @@
     "datastore" => "/var/vcap/data/container-metadata/store.json",
     "iptables_lock_file" => "/var/vcap/data/garden-cni/iptables.lock",
     "health_check_url" => "http://127.0.0.1:" + p('cf_networking.silk_daemon.listen_port').to_s,
-    "instance_address" => ethAddress.ip_address,
+    "instance_address" => ethAddress.strip,
     "iptables_asg_logging" => p("cf_networking.iptables_logging"),
     "iptables_c2c_logging" => p("cf_networking.iptables_logging"),
     "iptables_denied_logs_per_sec" => p("cf_networking.iptables_denied_logs_per_sec"),

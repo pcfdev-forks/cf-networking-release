@@ -21,10 +21,10 @@
     "https://#{hostname}:#{port}"
   end
 
-  ethAddress = Socket.ip_address_list.reject { |addr| !addr.ip? || addr.ipv4_loopback? || addr.ipv6? }.find { |addr| /10.*/.match(addr.ip_address).to_a.first }
+  ethAddress = `ip route get 1.2.3.4 | head -n1 | cut -d ' ' -f8`
 
   toRender = {
-    "underlay_ip" => ethAddress.ip_address,
+    "underlay_ip" => ethAddress.strip,
     "subnet_prefix_length" => subnet_prefix_length,
     "overlay_network" => p("cf_networking.network"),
     "health_check_port" => p("cf_networking.silk_daemon.listen_port"),
