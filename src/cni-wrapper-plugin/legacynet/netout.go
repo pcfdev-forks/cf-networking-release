@@ -64,8 +64,7 @@ func (m *NetOut) Initialize(containerHandle string, containerIP net.IP, dnsServe
 				"-s", containerIP.String(),
 			},
 			Rules: []rules.IPTablesRule{
-				rules.NewInputRelatedEstablishedRule(),
-				rules.NewInputDefaultRejectRule(),
+				rules.NewAcceptRule(),
 			},
 		},
 		{

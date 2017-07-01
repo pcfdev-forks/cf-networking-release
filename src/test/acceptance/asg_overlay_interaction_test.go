@@ -114,7 +114,7 @@ var _ = Describe("ASGs and Overlay Policy interaction", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			By("checking that default deny is still enforced")
-			assertResponseContains(fmt.Sprintf("%s.%s", appProxy, config.AppsDomain), 80, appProxy, "request failed")
+			assertResponseContains("example.com", 80, appProxy, "request failed")
 		})
 	})
 })
