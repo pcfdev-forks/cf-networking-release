@@ -35,7 +35,11 @@ func (m *NetIn) Initialize(containerHandle string) error {
 		},
 	}
 
-	return initChains(m.IPTables, args)
+	err := initChains(m.IPTables, args)
+	if err != nil {
+		return err
+	}
+	return initOutputLoopbackChain(m.IPTables, chain)
 }
 
 func (m *NetIn) Cleanup(containerHandle string) error {
@@ -48,6 +52,11 @@ func (m *NetIn) Cleanup(containerHandle string) error {
 	}
 
 	err = cleanupChain("mangle", "PREROUTING", chain, rules.IPTablesRule{}, m.IPTables)
+	if err != nil {
+		result = multierror.Append(result, err)
+	}
+
+	err = cleanupChain("nat", "OUTPUT", chain, rules.IPTablesRule{"-o", "lo"}, m.IPTables)
 	if err != nil {
 		result = multierror.Append(result, err)
 	}
@@ -105,6 +114,23 @@ func initChains(iptables rules.IPTablesAdapter, args []fullRule) error {
 				return fmt.Errorf("inserting rule: %s", err)
 			}
 		}
+	}
+
+	return nil
+}
+
+func initOutputLoopbackChain(iptables rules.IPTablesAdapter, chain string) error {
+	arg := fullRule{
+		Table:          "nat",
+		ParentChain:    "OUTPUT",
+		Chain:          chain,
+		JumpConditions: rules.IPTablesRule{"-o", "lo"},
+		Rules:          []rules.IPTablesRule{},
+	}
+	err := iptables.BulkInsert(arg.Table, arg.ParentChain, 1, append(
+		arg.JumpConditions, rules.IPTablesRule{"--jump", arg.Chain}...))
+	if err != nil {
+		return fmt.Errorf("inserting rule: %s", err)
 	}
 
 	return nil
