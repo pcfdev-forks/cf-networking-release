@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"log"
 	"log-transformer/config"
+	"log-transformer/merger"
+	"log-transformer/runner"
 	"os"
 	"path/filepath"
 
@@ -51,24 +53,28 @@ func main() {
 		logger.Fatal("tail-input", err)
 	}
 
-	logTransformer := &LogTransformer{
+	logMerger := &merger.Merger{
+	// ContainerRepo: repo
+	}
+	logTransformer := &runner.Runner{
 		Lines:          t.Lines,
 		Parser:         parser,
 		Logger:         logger,
+		Merger:         merger,
 		IPTablesLogger: iptablesLogger,
 	}
 
 	logTransformer.Run()
 
-	go func() {
-		for {
-			select {
-			case line := <-t.Lines:
-				file.Write([]byte(line.Text))
-			}
-		}
-	}()
+	// go func() {
+	// 	for {
+	// 		select {
+	// 		case line := <-t.Lines:
+	// 			file.Write([]byte(line.Text))
+	// 		}
+	// 	}
+	// }()
 
-	done := make(chan struct{})
-	<-done
+	// done := make(chan struct{})
+	// <-done
 }

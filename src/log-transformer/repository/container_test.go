@@ -1,6 +1,7 @@
 package repository_test
 
 import (
+	"errors"
 	"lib/datastore"
 	"lib/fakes"
 	"log-transformer/repository"
@@ -62,6 +63,17 @@ var _ = Describe("Container", func() {
 				SpaceID: "space-1",
 				OrgID:   "org-1",
 			}))
+		})
+
+		Context("when unable to read from datastore", func() {
+			BeforeEach(func() {
+				fakeStore.ReadAllReturns(nil, errors.New("apple"))
+			})
+
+			It("returns an error", func() {
+				_, err := repo.GetByIP("ip-1")
+				Expect(err).To(MatchError("read all: apple"))
+			})
 		})
 	})
 })

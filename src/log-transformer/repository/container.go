@@ -1,6 +1,9 @@
 package repository
 
-import "lib/datastore"
+import (
+	"errors"
+	"lib/datastore"
+)
 
 type Container struct {
 	Handle  string
@@ -16,7 +19,7 @@ type ContainerRepo struct {
 func (c *ContainerRepo) GetByIP(ip string) (Container, error) {
 	containers, err := c.Store.ReadAll()
 	if err != nil {
-		panic(err)
+		return Container{}, errors.Wrap(err, "foo")
 	}
 
 	for _, container := range containers {
