@@ -12,7 +12,7 @@ import (
 type LogTransformer struct {
 	KernelLogFile         string `json:"kernel_log_file" validate:"nonzero"`
 	ContainerMetadataFile string `json:"container_metadata_file" validate:"nonzero"`
-	OutputDirectory       string `json:"output_directory" validate:"nonzero"`
+	OutputLogFile         string `json:"output_log_file" validate:"nonzero"`
 }
 
 func New(path string) (*LogTransformer, error) {

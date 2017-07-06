@@ -1,15 +1,15 @@
 package repository
 
 import (
-	"errors"
+	"fmt"
 	"lib/datastore"
 )
 
 type Container struct {
-	Handle  string
-	AppID   string
-	SpaceID string
-	OrgID   string
+	Handle  string `json:"container_id"`
+	AppID   string `json:"app_guid"`
+	SpaceID string `json:"space_guid"`
+	OrgID   string `json:"organization_guid"`
 }
 
 type ContainerRepo struct {
@@ -19,22 +19,22 @@ type ContainerRepo struct {
 func (c *ContainerRepo) GetByIP(ip string) (Container, error) {
 	containers, err := c.Store.ReadAll()
 	if err != nil {
-		return Container{}, errors.Wrap(err, "foo")
+		return Container{}, fmt.Errorf("read all: %s", err)
 	}
 
 	for _, container := range containers {
 		if container.IP == ip {
 			appID, ok := container.Metadata["app_id"].(string)
 			if !ok {
-				panic("foo")
+				appID = ""
 			}
 			spaceID, ok := container.Metadata["space_id"].(string)
 			if !ok {
-				panic("bar")
+				spaceID = ""
 			}
 			orgID, ok := container.Metadata["org_id"].(string)
 			if !ok {
-				panic("baz")
+				orgID = ""
 			}
 			return Container{
 				Handle:  container.Handle,

@@ -1,6 +1,7 @@
 package integration_test
 
 import (
+	"encoding/json"
 	"io"
 	"io/ioutil"
 	"lib/datastore"
@@ -37,10 +38,11 @@ var _ = Describe("Integration", func() {
 		kernelLogFile, _ = ioutil.TempFile("", "")
 		containerMetadataFile, _ = ioutil.TempFile("", "")
 		outputDir, _ := ioutil.TempDir("", "")
+		outputFile = filepath.Join(outputDir, "iptables.log")
 		conf = config.LogTransformer{
 			KernelLogFile:         kernelLogFile.Name(),
 			ContainerMetadataFile: containerMetadataFile.Name(),
-			OutputDirectory:       outputDir,
+			OutputLogFile:         outputFile,
 		}
 		configFilePath := WriteConfigFile(conf)
 
@@ -48,8 +50,6 @@ var _ = Describe("Integration", func() {
 		logTransformerCmd := exec.Command(binaryPath, "-config-file", configFilePath)
 		session, err = gexec.Start(logTransformerCmd, GinkgoWriter, GinkgoWriter)
 		Expect(err).NotTo(HaveOccurred())
-
-		outputFile = filepath.Join(outputDir, "iptables.log")
 
 		store = &datastore.Store{
 			Serializer: &serial.Serial{},
@@ -82,14 +82,18 @@ var _ = Describe("Integration", func() {
 		Consistently(session, DEFAULT_TIMEOUT).ShouldNot(gexec.Exit())
 	})
 
+	XIt("should not truncate output log file on restart", func() {
+	})
+
 	FIt("logs data about packets", func() {
 		By("logging successful egress packets")
 		go AddToKernelLog("Jun 28 18:21:24 localhost kernel: [100471.222018] OK_container-handle-1-longer IN=s-010255178004 OUT=eth0 MAC=aa:aa:0a:ff:b2:04:ee:ee:0a:ff:b2:04:08:00 SRC=10.255.0.1 DST=10.10.10.10 LEN=29 TOS=0x00 PREC=0x00 TTL=63 ID=2806 DF PROTO=UDP SPT=36556 DPT=11111 LEN=9 MARK=0x1\n", kernelLogFile)
 		Eventually(outputFile).Should(BeAnExistingFile())
 		Eventually(ReadLines, "5s").Should(ContainElement(MatchJSON(`{
-			"source": "log-transformer",
-			"message": "egress-allowed",
-			"log_level": "1",
+			"timestamp": "some-timestamp",
+			"source": "cfnetworking.iptables",
+			"message": "cfnetworking.iptables.egress-allowed",
+			"log_level": 1,
 			"data": {
 				"source": {
 					"container_id": "container-handle-1-longer-than-29-chars",
@@ -98,12 +102,16 @@ var _ = Describe("Integration", func() {
 					"organization_guid": "organization_id_1"
 				},
 				"packet": {
+					"direction": "egress",
+					"allowed": true,
 					"src_ip": "10.255.0.1",
 					"src_port": 36556,
 					"dst_ip": "10.10.10.10",
 					"dst_port": 11111,
-					"protocol": "udp",
-					"mark": "0x1"
+					"protocol": "UDP",
+					"mark": "0x1",
+					"icmp_code": 0,
+					"icmp_type": 0
 				}
 			}
 		}`)))
@@ -129,10 +137,30 @@ func AddToKernelLog(line string, w io.Writer) {
 }
 
 func ReadLines() []string {
-	return strings.Split(ReadOutput(), "\n")
+	output := strings.Split(ReadOutput(), "\n")
+	output = output[:len(output)-1]
+
+	var outputs []string
+	for _, o := range output {
+		var outputMap map[string]interface{}
+		err := json.Unmarshal([]byte(o), &outputMap)
+		Expect(err).NotTo(HaveOccurred())
+
+		outputMap["timestamp"] = "some-timestamp"
+		outputJson, err := json.Marshal(outputMap)
+		Expect(err).NotTo(HaveOccurred())
+
+		outputs = append(outputs, string(outputJson))
+	}
+
+	return outputs
 }
+
 func ReadOutput() string {
 	bytes, err := ioutil.ReadFile(outputFile)
 	Expect(err).NotTo(HaveOccurred())
+	if string(bytes) == "" {
+		return "{}"
+	}
 	return string(bytes)
 }

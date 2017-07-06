@@ -29,7 +29,7 @@ var _ = Describe("Config", func() {
 				file.WriteString(`{
 					"kernel_log_file": "/var/log/kern.log",
 					"container_metadata_file": "/var/vcap/data/container-metadata/store.json",
-					"output_directory": "/var/vcap/sys/log/log-transformer"
+					"output_log_file": "/var/vcap/sys/log/log-transformer"
 				}`)
 			})
 			It("returns the config", func() {
@@ -37,7 +37,7 @@ var _ = Describe("Config", func() {
 				Expect(err).NotTo(HaveOccurred())
 				Expect(c.KernelLogFile).To(Equal("/var/log/kern.log"))
 				Expect(c.ContainerMetadataFile).To(Equal("/var/vcap/data/container-metadata/store.json"))
-				Expect(c.OutputDirectory).To(Equal("/var/vcap/sys/log/log-transformer"))
+				Expect(c.OutputLogFile).To(Equal("/var/vcap/sys/log/log-transformer"))
 			})
 		})
 
@@ -68,7 +68,7 @@ var _ = Describe("Config", func() {
 				allData := map[string]interface{}{
 					"kernel_log_file":         "/var/log/kern.log",
 					"container_metadata_file": "/var/vcap/data/container-metadata/store.json",
-					"output_directory":        "/var/vcap/sys/log/log-transformer",
+					"output_log_file":         "/var/vcap/sys/log/log-transformer",
 				}
 				delete(allData, missingFlag)
 				Expect(json.NewEncoder(file).Encode(allData)).To(Succeed())
@@ -78,7 +78,7 @@ var _ = Describe("Config", func() {
 			},
 			Entry("missing input file", "kernel_log_file", "KernelLogFile: zero value"),
 			Entry("missing container metadata file", "container_metadata_file", "ContainerMetadataFile: zero value"),
-			Entry("missing output directory", "output_directory", "OutputDirectory: zero value"),
+			Entry("missing output log file", "output_log_file", "OutputLogFile: zero value"),
 		)
 	})
 })

@@ -3,14 +3,19 @@ package main
 import (
 	"flag"
 	"fmt"
+	"lib/datastore"
+	"lib/filelock"
+	"lib/serial"
 	"log"
 	"log-transformer/config"
 	"log-transformer/merger"
+	"log-transformer/parser"
+	"log-transformer/repository"
 	"log-transformer/runner"
 	"os"
-	"path/filepath"
 
 	"github.com/hpcloud/tail"
+	"github.com/tedsuo/ifrit"
 
 	"code.cloudfoundry.org/lager"
 )
@@ -35,11 +40,6 @@ func main() {
 
 	logger.Info("starting")
 
-	file, err := os.Create(filepath.Join(conf.OutputDirectory, "iptables.log"))
-	if err != nil {
-		logger.Fatal("create-output-file", err)
-	}
-
 	t, err := tail.TailFile(conf.KernelLogFile, tail.Config{
 		Location: &tail.SeekInfo{
 			Offset: 0,
@@ -53,28 +53,32 @@ func main() {
 		logger.Fatal("tail-input", err)
 	}
 
-	logMerger := &merger.Merger{
-	// ContainerRepo: repo
+	kernelLogParser := &parser.KernelLogParser{}
+	store := &datastore.Store{
+		Serializer: &serial.Serial{},
+		Locker:     filelock.NewLocker(conf.ContainerMetadataFile),
 	}
+	containerRepo := &repository.ContainerRepo{
+		Store: store,
+	}
+	logMerger := &merger.Merger{
+		ContainerRepo: containerRepo,
+	}
+	iptablesLogger := lager.NewLogger(fmt.Sprintf("%s.iptables", logPrefix))
+	outputLogFile, err := os.OpenFile(conf.OutputLogFile, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+	if err != nil {
+		logger.Fatal("open-output-log-file", err)
+	}
+	iptablesSink := lager.NewWriterSink(outputLogFile, lager.DEBUG)
+	iptablesLogger.RegisterSink(iptablesSink)
 	logTransformer := &runner.Runner{
 		Lines:          t.Lines,
-		Parser:         parser,
+		Parser:         kernelLogParser,
 		Logger:         logger,
-		Merger:         merger,
+		Merger:         logMerger,
 		IPTablesLogger: iptablesLogger,
 	}
 
-	logTransformer.Run()
-
-	// go func() {
-	// 	for {
-	// 		select {
-	// 		case line := <-t.Lines:
-	// 			file.Write([]byte(line.Text))
-	// 		}
-	// 	}
-	// }()
-
-	// done := make(chan struct{})
-	// <-done
+	monitor := ifrit.Invoke(logTransformer)
+	<-monitor.Wait()
 }

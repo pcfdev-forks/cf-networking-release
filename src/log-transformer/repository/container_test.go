@@ -1,10 +1,10 @@
 package repository_test
 
 import (
+	"Log-transformer/repository"
 	"errors"
 	"lib/datastore"
 	"lib/fakes"
-	"log-transformer/repository"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -22,7 +22,7 @@ var _ = Describe("Container", func() {
 			Store: fakeStore,
 		}
 
-		fakeStore.ReadAllReturns(map[string]datastore.Container{
+		containers := map[string]datastore.Container{
 			"handle-1": {
 				Handle: "handle-1",
 				IP:     "ip-1",
@@ -37,7 +37,9 @@ var _ = Describe("Container", func() {
 				IP:       "ip-2",
 				Metadata: map[string]interface{}{},
 			},
-		}, nil)
+		}
+
+		fakeStore.ReadAllReturns(containers, nil)
 	})
 
 	Describe("GetByIP", func() {
@@ -73,6 +75,16 @@ var _ = Describe("Container", func() {
 			It("returns an error", func() {
 				_, err := repo.GetByIP("ip-1")
 				Expect(err).To(MatchError("read all: apple"))
+			})
+		})
+
+		Context("when the app id, space id and org id is invalid", func() {
+			It("returns a container with those fields as empty strings", func() {
+				container, err := repo.GetByIP("ip-2")
+				Expect(err).NotTo(HaveOccurred())
+				Expect(container.AppID).To(BeEmpty())
+				Expect(container.SpaceID).To(BeEmpty())
+				Expect(container.OrgID).To(BeEmpty())
 			})
 		})
 	})

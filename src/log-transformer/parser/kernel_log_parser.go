@@ -6,16 +6,16 @@ import (
 )
 
 type ParsedData struct {
-	Direction       string
-	Allowed         bool
-	SourceIP        string
-	DestinationIP   string
-	SourcePort      int
-	DestinationPort int
-	Protocol        string
-	Mark            string
-	ICMPType        int
-	ICMPCode        int
+	Direction       string `json:"direction"`
+	Allowed         bool   `json:"allowed"`
+	SourceIP        string `json:"src_ip"`
+	DestinationIP   string `json:"dst_ip"`
+	SourcePort      int    `json:"src_port"`
+	DestinationPort int    `json:"dst_port"`
+	Protocol        string `json:"protocol"`
+	Mark            string `json:"mark"`
+	ICMPType        int    `json:"icmp_type"`
+	ICMPCode        int    `json:"icmp_code"`
 }
 
 type KernelLogParser struct {
