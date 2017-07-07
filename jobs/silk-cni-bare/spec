@@ -1,0 +1,15 @@
+---
+name: silk-cni-bare
+
+templates:
+  pre-start.erb: bin/pre-start
+  cni-plugin.conf.erb: /etc/cni/net.d/cni-plugin.conf
+
+packages:
+  - silk-cni
+  - runc-cni
+
+properties:
+  cf_networking.silk_daemon.listen_port:
+    description: "Silk CNI plugin connects to the silk daemon on this port."
+    default: 23954

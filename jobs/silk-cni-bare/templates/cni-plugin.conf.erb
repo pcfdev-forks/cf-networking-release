@@ -1,0 +1,15 @@
+<%=
+  require 'json'
+
+  toRender = {
+    "cniVersion" => "0.3.1",
+    "name" => "silk",
+    "type" => "silk-cni",
+    "daemonPort" => p('cf_networking.silk_daemon.listen_port'),
+    "dataDir" => "/var/vcap/data/host-local",
+    "datastore" => "/var/vcap/data/silk/store.json",
+    "mtu" => 1300,
+  }
+
+  JSON.pretty_generate(toRender)
+%>
