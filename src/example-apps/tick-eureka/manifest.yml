@@ -1,0 +1,11 @@
+---
+applications:
+  - name: tick-eureka
+    memory: 32M
+    disk_quota: 32M
+    buildpack: go_buildpack
+    instances: 3
+    env:
+      GOPACKAGENAME: example-apps/tick-eureka
+      START_PORT: 7000
+      LISTEN_PORTS: 3
